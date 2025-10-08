@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Quiz Urutkan Kata (Drag & Drop)</title>
+  <style>
+    :root{--dark-blue:#0b2f6f;--light-skin:#cfe8ff;--white:#ffffff}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--dark-blue);color:#03396b;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:920px;background:var(--light-skin);border-radius:12px;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
+    h1{margin:0 0 10px;font-size:20px;color:#022c5a}
+    .meta{display:flex;gap:10px;align-items:center;margin-bottom:12px}
+    .question-box{background:linear-gradient(180deg,#e6f3ff,#d6eeff);padding:12px;border-radius:8px;display:flex;align-items:center;justify-content:space-between}
+    .words{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+    .word{background:var(--white);padding:8px 12px;border-radius:8px;cursor:grab;border:1px solid rgba(0,0,0,0.08);user-select:none}
+    .word:active{cursor:grabbing}
+    .drop-area{margin-top:14px;border-radius:6px;padding:8px;background:var(--white);min-height:68px;display:flex;align-items:flex-start}
+    textarea#answer{width:100%;height:68px;border:0;outline:0;background:transparent;resize:none;padding:6px;font-size:16px}
+    .controls{display:flex;gap:8px;margin-top:12px}
+    button{background:#0671d4;color:white;padding:8px 12px;border-radius:8px;border:0;cursor:pointer}
+    button.secondary{background:#2b6fb2}
+    .nav{margin-left:auto}
+    .feedback{margin-top:10px;height:22px;font-weight:600}
+    .small{font-size:13px;color:#034a7f}
+    .footer{margin-top:10px;font-size:13px;color:#03396b}
+    @media (max-width:960px){.card{width:100%}}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Quiz: Urutkan Kata (Drag & Drop)</h1>
+    <div class="meta small">Instruksi: Seret kata ke area putih (atau klik kata) untuk menyusunnya. Tekan <strong>Hasil</strong> untuk melihat umpan balik.</div>
+
+    <div id="quiz">
+      <div class="question-box">
+        <div>
+          <div class="small">Soal <span id="q-index">1</span> dari <span id="q-total">5</span></div>
+          <div id="prompt" style="font-weight:700;margin-top:6px">Susun kata-kata berikut menjadi kalimat bahasa Inggris yang benar.</div>
+        </div>
+        <div class="nav">
+          <button id="prevBtn" class="secondary">Previous</button>
+          <button id="nextBtn" class="secondary">Next</button>
+        </div>
+      </div>
+
+      <div class="words" id="wordsContainer" aria-live="polite"></div>
+
+      <div class="drop-area" id="dropArea">
+        <textarea id="answer" placeholder="" readonly aria-label="Area jawaban (kosong)"></textarea>
+      </div>
+
+      <div class="controls">
+        <button id="resultBtn">Hasil</button>
+        <button id="resetBtn" class="secondary">Reset</button>
+        <div class="feedback" id="feedback"></div>
+      </div>
+
+      <div class="footer">Warna skin soal: biru muda. Latar: biru tua.</div>
+    </div>
+  </div>
+
+  <script>
+    // Data soal (kata sudah dipecah)
+    const questions = [
+      {words:["I","am","going","to","the","market"], answer:['i','am','going','to','the','market']},
+      {words:["I","will","go","to","mountain"], answer:['i','will','go','to','mountain']},
+      {words:["I","will","play","football","tomorrow"], answer:['i','will','play','football','tomorrow']},
+      {words:["I","am","speaking","English"], answer:['i','am','speaking','english']},
+      {words:["I","went","to","zoo","yesterday"], answer:['i','went','to','zoo','yesterday']}
+    ];
+
+    // State
+    let current = 0;
+
+    // Helpers
+    function shuffle(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j=Math.floor(Math.random()*(i+1));
+        [a[i],a[j]]=[a[j],a[i]];
+      }
+      return a;
+    }
+
+    function renderQuestion(index){
+      current = index;
+      document.getElementById('q-index').textContent = index+1;
+      document.getElementById('q-total').textContent = questions.length;
+      document.getElementById('feedback').textContent = '';
+
+      // Clear answer area
+      const ta = document.getElementById('answer');
+      ta.value = '';
+
+      // Render words shuffled
+      const container = document.getElementById('wordsContainer');
+      container.innerHTML = '';
+      const words = shuffle(questions[index].words);
+      words.forEach((w,i)=>{
+        const el = document.createElement('div');
+        el.className = 'word';
+        el.draggable = true;
+        el.textContent = w;
+        el.setAttribute('data-word', w);
+        el.addEventListener('dragstart', e => {
+          e.dataTransfer.setData('text/plain', w);
+        });
+        // click also moves the word
+        el.addEventListener('click', ()=> moveWordToAnswer(el));
+        container.appendChild(el);
+      });
+
+      // update prev/next disabled
+      document.getElementById('prevBtn').disabled = index===0;
+      document.getElementById('nextBtn').disabled = index===questions.length-1;
+    }
+
+    function moveWordToAnswer(wordEl){
+      if(!wordEl) return;
+      const w = wordEl.getAttribute('data-word');
+      const ta = document.getElementById('answer');
+      // append without extra separators beyond single space
+      if(ta.value.trim().length===0) ta.value = w;
+      else ta.value = ta.value.trim() + ' ' + w;
+      // remove the tile
+      wordEl.remove();
+      updateAnswerAria();
+    }
+
+    function updateAnswerAria(){
+      const ta = document.getElementById('answer');
+      ta.setAttribute('aria-label', ta.value.trim()==='' ? 'Area jawaban (kosong)' : 'Area jawaban: '+ta.value);
+    }
+
+    // Drop handling on textarea container
+    const dropArea = document.getElementById('dropArea');
+    dropArea.addEventListener('dragover', e=> e.preventDefault());
+    dropArea.addEventListener('drop', e=>{
+      e.preventDefault();
+      const w = e.dataTransfer.getData('text/plain');
+      if(!w) return;
+      // find the corresponding tile and remove it
+      const tiles = Array.from(document.querySelectorAll('.word'));
+      const tile = tiles.find(t=>t.getAttribute('data-word')===w);
+      if(tile) moveWordToAnswer(tile);
+    });
+
+    // Buttons
+    document.getElementById('resultBtn').addEventListener('click', ()=>{
+      const ta = document.getElementById('answer');
+      const user = ta.value.trim().replace(/\s+/g,' ').toLowerCase();
+      const expected = questions[current].answer.join(' ').toLowerCase();
+      const feedback = document.getElementById('feedback');
+      if(user === expected){
+        feedback.textContent = 'Hebat jawaban anda benar';
+      } else {
+        feedback.textContent = 'Maaf jawaban anda salah ulangi lagi';
+      }
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      renderQuestion(current);
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', ()=>{
+      if(current < questions.length-1) renderQuestion(current+1);
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', ()=>{
+      if(current > 0) renderQuestion(current-1);
+    });
+
+    // Initialize
+    renderQuestion(0);
+
+    // Accessibility: allow keyboard Enter on word to move
+    document.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ // noop global
+      }
+    });
+  </script>
+</body>
+</html>
