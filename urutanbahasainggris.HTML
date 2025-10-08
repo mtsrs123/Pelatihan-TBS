@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mengurutkan Kata Bahasa Inggris</title>
+<style>
+  body {
+    background-color: #064e3b; /* hijau tua */
+    font-family: Arial, sans-serif;
+    color: white;
+    text-align: center;
+    padding: 30px;
+  }
+
+  h1 {
+    color: #d1fae5; /* hijau muda */
+  }
+
+  #container {
+    background-color: #a7f3d0; /* hijau muda */
+    border-radius: 15px;
+    padding: 20px;
+    width: 60%;
+    margin: auto;
+    box-shadow: 0px 0px 10px #022c22;
+  }
+
+  .word {
+    display: inline-block;
+    background-color: #047857;
+    color: white;
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 10px;
+    cursor: grab;
+    font-size: 18px;
+  }
+
+  .word:active {
+    cursor: grabbing;
+  }
+
+  #dropArea {
+    margin-top: 20px;
+    width: 90%;
+    height: 100px;
+    background-color: white; /* teks area putih */
+    color: black;
+    border-radius: 10px;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 18px;
+  }
+
+  button {
+    background-color: #065f46;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  button:hover {
+    background-color: #047857;
+  }
+
+  #feedback {
+    font-size: 20px;
+    margin-top: 15px;
+    font-weight: bold;
+  }
+</style>
+</head>
+<body>
+
+<h1>Susunlah Kata Bahasa Inggris Berikut</h1>
+
+<div id="container">
+  <p>Seret (drag) kata berikut ke dalam area teks untuk membentuk kalimat yang benar.</p>
+  <div id="wordContainer"></div>
+
+  <div id="dropArea" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+
+  <div>
+    <button onclick="cekJawaban()">Hasil</button>
+    <button onclick="resetGame()">Reset</button>
+  </div>
+
+  <div id="feedback"></div>
+</div>
+
+<script>
+  const correctSentence = "I am going to the market";
+  const words = ["I", "am", "going", "to", "the", "market"];
+
+  // Fungsi untuk mengacak kata
+  function shuffle(array) {
+    let currentIndex = array.length, randomIndex;
+    while (currentIndex !== 0) {
+      randomIndex = Math.floor(Math.random() * currentIndex);
+      currentIndex--;
+      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
+    }
+    return array;
+  }
+
+  function loadWords() {
+    const container = document.getElementById("wordContainer");
+    container.innerHTML = "";
+    const shuffledWords = shuffle([...words]);
+    shuffledWords.forEach((word, index) => {
+      const span = document.createElement("span");
+      span.textContent = word;
+      span.id = "word" + index;
+      span.className = "word";
+      span.draggable = true;
+      span.ondragstart = drag;
+      container.appendChild(span);
+    });
+  }
+
+  function allowDrop(ev) {
+    ev.preventDefault();
+  }
+
+  function drag(ev) {
+    ev.dataTransfer.setData("text", ev.target.id);
+  }
+
+  function drop(ev) {
+    ev.preventDefault();
+    const data = ev.dataTransfer.getData("text");
+    const draggedElement = document.getElementById(data);
+    const dropArea = document.getElementById("dropArea");
+
+    // Tambahkan teks ke area drop
+    if (dropArea.textContent.trim() !== "") {
+      dropArea.textContent += " " + draggedElement.textContent;
+    } else {
+      dropArea.textContent = draggedElement.textContent;
+    }
+
+    // Hilangkan kata dari daftar
+    draggedElement.style.display = "none";
+  }
+
+  function cekJawaban() {
+    const userAnswer = document.getElementById("dropArea").textContent.trim();
+    const feedback = document.getElementById("feedback");
+    if (userAnswer === correctSentence) {
+      feedback.style.color = "green";
+      feedback.textContent = "Hebat! Jawaban anda benar ✅";
+    } else {
+      feedback.style.color = "red";
+      feedback.textContent = "Maaf, jawaban anda salah. Ulangi lagi ❌";
+    }
+  }
+
+  function resetGame() {
+    document.getElementById("dropArea").textContent = "";
+    document.getElementById("feedback").textContent = "";
+    loadWords();
+  }
+
+  // Jalankan saat halaman pertama kali dibuka
+  loadWords();
+</script>
+
+</body>
+</html>
