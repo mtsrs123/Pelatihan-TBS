@@ -1,0 +1,147 @@
+Teka-teki
+· html
+<!doctype html>
+      <button id="check-btn">Hasil</button>
+      <button id="reset-btn">Reset</button>
+    </div>
+
+
+    <div id="feedback"></div>
+  </div>
+
+
+  <script>
+    const words = ["I", "am", "going", "to", "the", "market"];
+
+
+    const container = document.getElementById('word-container');
+    const dropArea = document.getElementById('drop-area');
+    const feedback = document.getElementById('feedback');
+
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+
+    function renderWords() {
+      container.innerHTML = '';
+      shuffle([...words]).forEach(word => {
+        const div = document.createElement('div');
+        div.textContent = word;
+        div.className = 'word';
+        div.draggable = true;
+        div.addEventListener('dragstart', dragStart);
+        container.appendChild(div);
+      });
+      dropArea.value = '';
+      feedback.textContent = '';
+    }
+
+
+    function dragStart(e) {
+      e.dataTransfer.setData('text', e.target.textContent);
+    }
+
+
+    dropArea.addEventListener('dragover', e => {
+      e.preventDefault();
+    });
+
+
+    dropArea.addEventListener('drop', e => {
+      e.preventDefault();
+      const text = e.dataTransfer.getData('text');
+      if (text) {
+        if (dropArea.value.trim() === '') {
+          dropArea.value = text;
+        } else {
+          dropArea.value += '-' + text;
+        }
+        const wordEl = [...container.children].find(w => w.textContent === text);
+        if (wordEl) wordEl.remove();
+      }
+    });
+
+
+    document.getElementById('check-btn').addEventListener('click', () => {
+      const answer = dropArea.value.trim();
+      if (answer === 'I-am-going-to-the-market') {
+        feedback.textContent = 'Hebat jawaban anda benar';
+        feedback.style.color = 'green';
+      } else {
+        feedback.textContent = 'Maaf jawaban anda salah ulangi lagi';
+        feedback.style.color = 'red';
+      }
+    });
+
+
+    document.getElementById('reset-btn').addEventListener('click', renderWords);
+
+
+    renderWords();
+  </script>
+</body>
+</html>
+Teka-teki
+· html
+<!DOCTYPE html>
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+
+    function renderWords() {
+      container.innerHTML = '';
+      const shuffled = shuffle([...words]);
+      shuffled.forEach(word => {
+        const div = document.createElement('div');
+        div.textContent = word;
+        div.className = 'word';
+        div.draggable = true;
+        div.addEventListener('dragstart', dragStart);
+        container.appendChild(div);
+      });
+      dropArea.value = '';
+      feedback.textContent = '';
+    }
+
+
+    function dragStart(e) {
+      e.dataTransfer.setData('text', e.target.textContent);
+    }
+
+
+    dropArea.addEventListener('dragover', e => e.preventDefault());
+
+
+    dropArea.addEventListener('drop', e => {
+      e.preventDefault();
+      const text = e.dataTransfer.getData('text');
+      if (text) {
+        dropArea.value = dropArea.value.trim() ? dropArea.value + '-' + text : text;
+        const el = [...container.children].find(w => w.textContent === text);
+        if (el) el.remove();
+      }
+    });
+
+
+    document.getElementById('check-btn').addEventListener('click', () => {
+      const answer = dropArea.value.trim();
+      if (answer === correctAnswer) {
+        feedback.textContent = 'Hebat jawaban anda benar';
+        feedback.style.color = 'green';
+      } else {
+        feedback.textContent = 'Maaf jawaban anda salah ulangi lagi';
+        feedback.style.color = 'red';
+      }
+    });
+
+
+    document.getElementById('reset-btn').addEventListener('click', renderWords);
+
+
+    renderWords();
+  </script>
+</body>
+</html>
